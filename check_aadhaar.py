@@ -136,7 +136,7 @@ import time
 app = Flask(__name__)
 
 # Anticaptcha API Key
-ANTI_CAPTCHA_API_KEY = "2f91f49e0d8cafd925798b03d4aed443"
+ANTI_CAPTCHA_API_KEY = "82ed9e5b86016f99c399359ec84f6fe8"
 
 # Aadhaar Verification URL
 AADHAAR_URL = "https://myaadhaar.uidai.gov.in/check-aadhaar-validity/en"
@@ -211,10 +211,15 @@ def check_aadhaar_validity(aadhaar_number):
         captcha_input = driver.find_element(By.NAME, "captcha")
         captcha_input.send_keys(captcha_text)
 
+        # Wait for the "Proceed" button to be clickable and interactable
         proceed_button = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.XPATH, '//button[@type="button" and contains(@class, "button_btn__HeAxz")]'))
+            EC.element_to_be_clickable((By.XPATH, '//button[@class="button_btn__1dRFj"]'))
         )
+
+        # Scroll the button into view 
         driver.execute_script("arguments[0].scrollIntoView(true);", proceed_button)
+
+        # Click the button
         proceed_button.click()
 
         wait = WebDriverWait(driver, 200)

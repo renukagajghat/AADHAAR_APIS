@@ -1,4 +1,3 @@
-#working code with headless browser
 from flask import Flask, request, jsonify
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -15,15 +14,17 @@ app = Flask(__name__)
 
 #setup chrome options
 options = Options()
-# options.add_argument("--headless")  # Enable headless mode
+options.add_argument("--headless")  # Enable headless mode
 options.add_argument("--disable-gpu")  # Disable GPU for headless mode
 options.add_argument("--no-sandbox")  # Bypass OS security model (Linux)
 options.add_argument("--disable-dev-shm-usage")  # Overcome limited resource problems
+options.add_argument("--window-size=1920x1080")  # Set window size for better rendering
+options.add_argument("--disable-extensions")  # Disable extensions for better performance
 
 service = Service(executable_path='C:/Users/renuka/chromedriver.exe')
 
 # Anticaptcha API Key
-ANTI_CAPTCHA_API_KEY = "09e4c1ee0134815fde031aa2fd2a2063"
+ANTI_CAPTCHA_API_KEY = "82ed9e5b86016f99c399359ec84f6fe8"
 
 # Aadhaar Verification URL
 AADHAAR_URL = "https://myaadhaar.uidai.gov.in/check-aadhaar-validity/en"
@@ -126,11 +127,30 @@ def check_aadhaar_validity(aadhaar_number):
         captcha_input.clear()
         captcha_input.send_keys(captcha_text)
 
+        # Wait for the "Proceed" button to be clickable and interactable
         proceed_button = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH, '//button[@type="button" and contains(@class, "button_btn__HeAxz")]'))
+            EC.element_to_be_clickable((By.XPATH, '//button[@class="button_btn__1dRFj"]'))
         )
+
+        # Scroll the button into view 
         driver.execute_script("arguments[0].scrollIntoView(true);", proceed_button)
+
+        # Click the button
         proceed_button.click()
+
+        time.sleep(5)
+
+        # Check if the error message appears
+        try:
+            error_message_element = WebDriverWait(driver, 120).until(
+                EC.presence_of_element_located((By.ID, "CHECK_AADHAAR_VALIDITY_API_ERROR"))
+            )
+            error_message = error_message_element.text.strip()
+            if "We're currently experiencing technical difficulties" in error_message:
+                return {"message": "API is unavailable at the current time.", "status": False}
+        except Exception:
+            # If no error message, continue processing
+            pass
 
         # Wait for the result page
         try:
@@ -172,6 +192,7 @@ def check_aadhaar_validity(aadhaar_number):
         driver.quit()
 
 
+
 @app.route('/get-aadhaar-details', methods=['POST'])
 def get_aadhaar_details():
     """API endpoint to validate Aadhaar number."""
@@ -186,6 +207,7 @@ def get_aadhaar_details():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
 
 
 
